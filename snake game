@@ -1,1 +1,78 @@
-print("")
+#snake game in python
+
+
+#استدعاء مكتبة random لتوليد أرقام عشوائية
+import random
+#تحديد مكتبة curses للتحكم في واجهة المستخدم النصية
+import curses
+
+scren= curses.initscr()
+#لأخفاء المؤشر
+curses.curs_set(0)
+scren_hight, scren_width = scren.getmaxyx()
+
+window = curses.newwin(scren_hight, scren_width, 0, 0)
+#يفعل استقبال مفاتيح التصفح 
+window.keypad(1)
+#يحدد زمن الانتظار لقراءة الكيبورد قبل الاستمرار تلقائياً
+window.timeout(100)
+#تحدد موقع نقطة البداية 
+snk_x = scren_width//4
+snk_y = scren_hight//2
+#جسم الحية
+snake = [
+    [snk_y, snk_x],
+    [snk_y, snk_x - 1],
+    [snk_y, snk_x - 2]
+]
+#موضع الطعام
+food = [scren_hight//2, scren_width//2]
+#عرض الطعام على الشاشة
+window.addch(food[0],food[1], curses.ACS_PI)
+#يبدأ بالتحرك الى اليمين 
+key = curses.KEY_RIGHT 
+
+while True :
+    #تحديد اتجاه الحركة
+    next_key = window.getch()
+    #تحديد المفتاح التالي
+    key = key if next_key == -1 else next_key
+    #هل الرأس وصل الى الحافة او الى جسم الحية
+    if snake[0][0] in [0, scren_hight] or snake[0][1] in [0, scren_width] or snake[0] in snake[1:]:
+        #إنهاء الشاشة
+        curses.endwin()
+        quit()
+#موضع الرأس الجديد
+new_head = [snake[0][0] , snake[0][1]]
+if key == curses.KEY_DOWN:
+    new_head[0] += 1
+if key == curses.KEY_UP:
+    new_head[0] -= 1
+if key == curses.KEY_RIGHT:
+    new_head[1] += 1
+if key == curses.KEY_LEFT:
+    new_head[1] -= 1
+#إضافة الرأس الجديد للحية
+snake.insert(0, new_head)
+#إذا تلام الرأس الطعام
+if snake[0] == food : 
+    #إضافة طعام جديد في مكان عشوائي
+    food = None
+    #ظاهر الطعام في مكان جديد
+    while food is None:
+        #تحديد مكان عشوائي للطعام
+        new_food = [
+            #تحديد مكان عشوائي للطعام
+            random.randint(1, scren_hight - 1),
+            #تحديد مكان عشوائي للطعام
+            random.randint(1, scren_width - 1)
+        ]
+    #إذا كان الطعام الجديد في جسم الحية يتم تجاهله
+    food = new_food if new_food not in snake else None
+    window.addch(food[0], food[1], curses.ACS_PI)
+else:
+    #إزالة آخر جزء من جسم الحية
+    tail = snake.pop()
+    window.addch(tail[0], tail[1], ' ')
+window.addch(snake[0][0], snake[0][1], curses.ACS_CKBOARD)
+
