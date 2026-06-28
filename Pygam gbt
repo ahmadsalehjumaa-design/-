@@ -1,0 +1,88 @@
+import pygame
+import random
+
+pygame.init()
+
+# حجم الشاشة
+width, height = 800, 600
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Hunter Game")
+
+clock = pygame.time.Clock()
+
+# اللاعب
+player_x = 100
+player_y = 100
+speed = 5
+
+# العدو
+enemy_x = 400
+enemy_y = 300
+enemy_speed = 2  # أبطأ من اللاعب
+
+# السكور
+score = 0
+
+font = pygame.font.SysFont(None, 40)
+
+running = True
+while running:
+
+    clock.tick(60)  # FPS
+
+    screen.fill((0, 0, 0))  # خلفية سوداء
+
+    # الأحداث
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # ضغط الأزرار
+    keys = pygame.key.get_pressed()
+
+    # حركة اللاعب (سريع)
+    if keys[pygame.K_LEFT]:
+        player_x -= speed
+    if keys[pygame.K_RIGHT]:
+        player_x += speed
+    if keys[pygame.K_UP]:
+        player_y -= speed
+    if keys[pygame.K_DOWN]:
+        player_y += speed
+
+    # حركة العدو (أبطأ + يلاحق اللاعب)
+    if enemy_x < player_x:
+        enemy_x += enemy_speed
+    if enemy_x > player_x:
+        enemy_x -= enemy_speed
+    if enemy_y < player_y:
+        enemy_y += enemy_speed
+    if enemy_y > player_y:
+        enemy_y -= enemy_speed
+
+    # اللاعب (مربع أخضر)
+    player = pygame.Rect(player_x, player_y, 30, 30)
+    pygame.draw.rect(screen, (0, 255, 0), player)
+
+    # العدو (مربع أحمر)
+    enemy = pygame.Rect(enemy_x, enemy_y, 30, 30)
+    pygame.draw.rect(screen, (255, 0, 0), enemy)
+
+    # تصادم
+    if player.colliderect(enemy):
+        score += 1
+        enemy_x = random.randint(50, 750)
+        enemy_y = random.randint(50, 550)
+
+    # عرض السكور
+    text = font.render("Score: " + str(score), True, (255, 255, 255))
+    screen.blit(text, (10, 10))
+
+    # فوز
+    if score >= 10:
+        win_text = font.render("YOU WIN!", True, (255, 255, 0))
+        screen.blit(win_text, (300, 250))
+
+    pygame.display.update()
+
+pygame.quit()
