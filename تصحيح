@@ -1,65 +1,66 @@
-import curses
-import random
-import time
+import curses  # استيراد مكتبة التحكم بالترمينال (الرسم + الكيبورد)
+import random   # نستخدمها لاحقًا لو بدنا نولد أماكن عشوائية
+import time     # للتحكم بالوقت (مفيد لاحقًا للسرعات)
 
-scren = curses.initscr()
-curses.curs_set(0)
+scren = curses.initscr()  # إنشاء شاشة اللعبة
+curses.curs_set(0)        # إخفاء مؤشر الكتابة (الماوس النصي)
 
-scren_hight, scren_width = scren.getmaxyx()
+scren_hight, scren_width = scren.getmaxyx()  # أخذ حجم الشاشة (ارتفاع + عرض)
 
-window = curses.newwin(scren_hight, scren_width, 0, 0)
-window.keypad(1)
-window.timeout(100)
+window = curses.newwin(scren_hight, scren_width, 0, 0)  # إنشاء نافذة اللعبة
+window.keypad(1)   # تفعيل قراءة الأسهم من الكيبورد
+window.timeout(100) # سرعة التحديث (كل 100ms = سرعة اللعبة)
 
-# اللاعب
-hanter_x = scren_width // 4
-hanter_y = scren_hight // 2
+# =========================
+# اللاعب (هانتر)
+# =========================
+hanter = [scren_hight // 2, scren_width // 4]  # مكان البداية (وسط يسار)
 
-# نخليه نقطة واحدة (أسهل لهالمشروع)
-hanter = [hanter_y, hanter_x]
+# =========================
+# العدو (Enemy)
+# =========================
+enemy = [scren_hight // 2, scren_width // 2]  # مكان البداية (الوسط)
 
-# العدو
-enemy_x = scren_width // 2
-enemy_y = scren_hight // 2
+# =========================
+# السكور
+# =========================
+score = 0  # عداد النقاط يبدأ من 0
 
-enemy = [enemy_y, enemy_x]
+key = curses.KEY_RIGHT  # اتجاه افتراضي للحركة
 
-key = curses.KEY_RIGHT
-
+# =========================
+# Game Loop
+# =========================
 while True:
 
-    window.clear()
+    window.clear()  # مسح الشاشة في كل إطار (حتى لا تتكرر الرسومات)
 
-    # قراءة الزر
-    next_key = window.getch()
-    key = key if next_key == -1 else next_key
+    # قراءة ضغط الزر
+    next_key = window.getch()  # أخذ الإدخال من الكيبورد
+    key = key if next_key == -1 else next_key  # إذا ما في زر خليك على نفس الاتجاه
 
-    # حركة اللاعب
-    new_y = hanter[0]
-    new_x = hanter[1]
+    # =========================
+    # حركة اللاعب (سريع)
+    # =========================
+    new_y = hanter[0]  # نسخ قيمة Y الحالية
+    new_x = hanter[1]  # نسخ قيمة X الحالية
 
-    if key == curses.KEY_UP:
+    if key == curses.KEY_UP:     # إذا ضغط فوق
         new_y -= 1
-    elif key == curses.KEY_DOWN:
+    elif key == curses.KEY_DOWN:  # إذا ضغط تحت
         new_y += 1
-    elif key == curses.KEY_RIGHT:
+    elif key == curses.KEY_RIGHT: # يمين
         new_x += 1
-    elif key == curses.KEY_LEFT:
+    elif key == curses.KEY_LEFT:  # يسار
         new_x -= 1
 
-    hanter = [new_y, new_x]
+    hanter = [new_y, new_x]  # تحديث موقع اللاعب
 
-    # حدود الشاشة (تصحيح مهم)
-    if (hanter[0] <= 0 or hanter[0] >= scren_hight - 1 or
-        hanter[1] <= 0 or hanter[1] >= scren_width - 1):
-        curses.endwin()
-        quit()
-
-    # حركة العدو (نفس فكرتك لكن بدون loop داخلي)
-    alfark_x = abs(hanter[1] - enemy[1])
-    alfark_y = abs(hanter[0] - enemy[0])
-
-    if alfark_x < 5 and alfark_y < 5:
+    # =========================
+    # حركة العدو (أبطأ)
+    # =========================
+    # العدو لا يتحرك كل فريم → يعطي فرق سرعة
+    if score % 2 == 0:  # كل فريمين يتحرك مرة (أبطأ من اللاعب)
 
         if enemy[1] < hanter[1]:
             enemy[1] += 1
@@ -71,8 +72,44 @@ while True:
         elif enemy[0] > hanter[0]:
             enemy[0] -= 1
 
-    # الرسم
-    window.addch(hanter[0], hanter[1], '@')
-    window.addch(enemy[0], enemy[1], 'X')
+    # =========================
+    # حدود الشاشة
+    # =========================
+    if (hanter[0] <= 0 or hanter[0] >= scren_hight - 1 or
+        hanter[1] <= 0 or hanter[1] >= scren_width - 1):
+        curses.endwin()  # إنهاء الشاشة
+        quit()
 
-    window.refresh()
+    # =========================
+    # التصادم (Collision)
+    # =========================
+    if hanter == enemy:  # إذا لمس اللاعب العدو
+        score += 1       # زيادة السكور
+
+        # إعادة مكان العدو بشكل عشوائي
+        enemy = [
+            random.randint(1, scren_hight - 2),
+            random.randint(1, scren_width - 2)
+        ]
+
+    # =========================
+    # الفوز
+    # =========================
+    if score == 20:
+        window.clear()
+        window.addstr(scren_hight // 2, scren_width // 2 - 5, "YOU WIN")
+        window.refresh()
+        time.sleep(2)
+        curses.endwin()
+        quit()
+
+    # =========================
+    # الرسم
+    # =========================
+    window.addstr(hanter[0], hanter[1], '@')  # رسم اللاعب
+    window.addstr(enemy[0], enemy[1], 'X')    # رسم العدو
+
+    # عرض السكور
+    window.addstr(0, 2, f"Score: {score}")
+
+    window.refresh()  # تحديث الشاشة
