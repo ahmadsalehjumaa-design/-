@@ -1,0 +1,78 @@
+import curses
+import random
+import time
+
+scren = curses.initscr()
+curses.curs_set(0)
+
+scren_hight, scren_width = scren.getmaxyx()
+
+window = curses.newwin(scren_hight, scren_width, 0, 0)
+window.keypad(1)
+window.timeout(100)
+
+# اللاعب
+hanter_x = scren_width // 4
+hanter_y = scren_hight // 2
+
+# نخليه نقطة واحدة (أسهل لهالمشروع)
+hanter = [hanter_y, hanter_x]
+
+# العدو
+enemy_x = scren_width // 2
+enemy_y = scren_hight // 2
+
+enemy = [enemy_y, enemy_x]
+
+key = curses.KEY_RIGHT
+
+while True:
+
+    window.clear()
+
+    # قراءة الزر
+    next_key = window.getch()
+    key = key if next_key == -1 else next_key
+
+    # حركة اللاعب
+    new_y = hanter[0]
+    new_x = hanter[1]
+
+    if key == curses.KEY_UP:
+        new_y -= 1
+    elif key == curses.KEY_DOWN:
+        new_y += 1
+    elif key == curses.KEY_RIGHT:
+        new_x += 1
+    elif key == curses.KEY_LEFT:
+        new_x -= 1
+
+    hanter = [new_y, new_x]
+
+    # حدود الشاشة (تصحيح مهم)
+    if (hanter[0] <= 0 or hanter[0] >= scren_hight - 1 or
+        hanter[1] <= 0 or hanter[1] >= scren_width - 1):
+        curses.endwin()
+        quit()
+
+    # حركة العدو (نفس فكرتك لكن بدون loop داخلي)
+    alfark_x = abs(hanter[1] - enemy[1])
+    alfark_y = abs(hanter[0] - enemy[0])
+
+    if alfark_x < 5 and alfark_y < 5:
+
+        if enemy[1] < hanter[1]:
+            enemy[1] += 1
+        elif enemy[1] > hanter[1]:
+            enemy[1] -= 1
+
+        if enemy[0] < hanter[0]:
+            enemy[0] += 1
+        elif enemy[0] > hanter[0]:
+            enemy[0] -= 1
+
+    # الرسم
+    window.addch(hanter[0], hanter[1], '@')
+    window.addch(enemy[0], enemy[1], 'X')
+
+    window.refresh()
